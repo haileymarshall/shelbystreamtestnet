@@ -57,13 +57,14 @@ export async function GET(req: Request) {
     const creator = searchParams.get("creator")?.toLowerCase();
 
     const { getShelbyNodeClient } = await import("@/lib/shelby-server");
+    const { Order_By } = await import("@shelby-protocol/sdk/node");
     const { client } = await getShelbyNodeClient(privateKey);
 
     const blobs = await client.coordination.getBlobs({
       where: {
         blob_name: { _like: "%/metadata.json" },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { created_at: Order_By.Desc },
       pagination: { limit: 100 },
     });
 
@@ -71,7 +72,7 @@ export async function GET(req: Request) {
       await Promise.all(
         blobs.map((blob) =>
           fetchVideoMetadata({
-            owner: blob.owner,
+            owner: blob.owner.toString(),
             blobNameSuffix: blob.blobNameSuffix,
             creationMicros: blob.creationMicros,
           })
