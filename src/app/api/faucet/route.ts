@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
-
-const SHELBYUSD_FAUCET_URL =
-  "https://faucet.shelbynet.shelby.xyz/fund?asset=shelbyusd";
+import { SHELBY_NETWORK } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +19,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (SHELBY_NETWORK === "testnet") {
+      return Response.json(
+        {
+          error:
+            "Shelby testnet faucet access is gated. Use the Shelby Discord /faucet command for Early Access testnet funds.",
+        },
+        { status: 501 }
+      );
+    }
+
     const privateKey = process.env.APTOS_PRIVATE_KEY;
     if (!privateKey) throw new Error("APTOS_PRIVATE_KEY not configured");
 
@@ -34,21 +42,13 @@ export async function POST(req: NextRequest) {
       });
       return Response.json({ hash, amount: "1 APT" });
     } else {
-      // Call the ShelbyUSD faucet endpoint directly with a smaller amount
-      const res = await fetch(SHELBYUSD_FAUCET_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, amount: 1_000_000 }), // 1 ShelbyUSD
-      });
-
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`ShelbyUSD faucet failed: ${body}`);
-      }
-
-      const json = await res.json();
-      const hash = json.txn_hashes?.[0] ?? "unknown";
-      return Response.json({ hash, amount: "1 ShelbyUSD" });
+      return Response.json(
+        {
+          error:
+            "ShelbyUSD faucet automation is only available on Shelbynet. Use the gated Shelby Discord /faucet flow for testnet.",
+        },
+        { status: 501 }
+      );
     }
   } catch (err) {
     console.error("Faucet error:", err);

@@ -4,7 +4,6 @@ import { useVideos } from "@/hooks/useVideos";
 import VideoGrid from "@/components/video/VideoGrid";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useMemo } from "react";
-import type { VideoMetadata } from "@/types";
 import { useSearchParams } from "next/navigation";
 
 type SortKey = "recent" | "trending";

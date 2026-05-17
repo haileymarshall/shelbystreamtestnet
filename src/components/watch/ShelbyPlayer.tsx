@@ -44,6 +44,7 @@ function PlayerControls({ title }: { title?: string }) {
 
   const [visible, setVisible] = useState(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controlsVisible = mediaPaused || visible;
 
   const showControls = useCallback(() => {
     setVisible(true);
@@ -55,7 +56,6 @@ function PlayerControls({ title }: { title?: string }) {
 
   useEffect(() => {
     if (mediaPaused) {
-      setVisible(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     }
   }, [mediaPaused]);
@@ -86,13 +86,13 @@ function PlayerControls({ title }: { title?: string }) {
       {/* Bottom gradient backdrop */}
       <div
         className="absolute bottom-0 inset-x-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent pointer-events-none transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
+        style={{ opacity: controlsVisible ? 1 : 0 }}
       />
 
       {/* Seekbar */}
       <div
         className="flex w-full items-center px-4 z-20 transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none" }}
+        style={{ opacity: controlsVisible ? 1 : 0, pointerEvents: controlsVisible ? "auto" : "none" }}
       >
         <Seekbar />
       </div>
@@ -100,7 +100,7 @@ function PlayerControls({ title }: { title?: string }) {
       {/* Control bar */}
       <div
         className="flex w-full items-center pb-1 px-2 z-20 transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none" }}
+        style={{ opacity: controlsVisible ? 1 : 0, pointerEvents: controlsVisible ? "auto" : "none" }}
       >
         <PlayButton />
         <MuteButton />

@@ -14,6 +14,7 @@ import {
   Fuel,
 } from "lucide-react";
 import { toast } from "sonner";
+import { SHELBY_NETWORK } from "@/lib/constants";
 
 export default function FaucetPage() {
   const { connected, account } = useWallet();
@@ -25,6 +26,7 @@ export default function FaucetPage() {
     amount: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isTestnet = SHELBY_NETWORK === "testnet";
 
   const requestTokens = async (token: "APT" | "ShelbyUSD") => {
     if (!account?.address) return;
@@ -86,8 +88,9 @@ export default function FaucetPage() {
           <h1 className="text-2xl font-bold">Faucet</h1>
         </div>
         <p className="text-muted-foreground text-sm">
-          Request test tokens on Shelbynet. APT is used for gas fees, ShelbyUSD
-          is used for storage fees when uploading videos.
+          {isTestnet
+            ? "Shelby testnet faucet access is gated. Use the Shelby Discord /faucet command for Early Access testnet funds."
+            : "Request test tokens on Shelbynet. APT is used for gas fees, ShelbyUSD is used for storage fees when uploading videos."}
         </p>
       </div>
 
@@ -112,10 +115,15 @@ export default function FaucetPage() {
           </div>
           <Button
             onClick={() => requestTokens("APT")}
-            disabled={loadingApt}
+            disabled={loadingApt || isTestnet}
             className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {loadingApt ? (
+            {isTestnet ? (
+              <span className="flex items-center gap-2">
+                <Droplets className="w-4 h-4" />
+                Use Discord /faucet
+              </span>
+            ) : loadingApt ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Requesting APT...
@@ -149,10 +157,15 @@ export default function FaucetPage() {
           </div>
           <Button
             onClick={() => requestTokens("ShelbyUSD")}
-            disabled={loadingSusd}
+            disabled={loadingSusd || isTestnet}
             className="w-full h-10 bg-green-600 hover:bg-green-700 text-white"
           >
-            {loadingSusd ? (
+            {isTestnet ? (
+              <span className="flex items-center gap-2">
+                <Droplets className="w-4 h-4" />
+                Use Discord /faucet
+              </span>
+            ) : loadingSusd ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Requesting ShelbyUSD...
@@ -197,12 +210,25 @@ export default function FaucetPage() {
             </code>
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            These are test tokens on Shelbynet and have no real value. After
-            receiving tokens, you can{" "}
-            <a href="/upload" className="text-primary hover:underline">
-              upload a video
-            </a>{" "}
-            which requires both APT (gas) and ShelbyUSD (storage fee).
+            {isTestnet ? (
+              <>
+                Early Access testnet funds are issued through Shelby&apos;s gated
+                Discord faucet flow. After funding your wallet, you can{" "}
+                <a href="/upload" className="text-primary hover:underline">
+                  upload a video
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                These are test tokens on Shelbynet and have no real value. After
+                receiving tokens, you can{" "}
+                <a href="/upload" className="text-primary hover:underline">
+                  upload a video
+                </a>{" "}
+                which requires both APT (gas) and ShelbyUSD (storage fee).
+              </>
+            )}
           </p>
         </div>
       </div>

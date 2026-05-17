@@ -20,10 +20,8 @@ export async function POST(req: NextRequest) {
         "video/*",
       ],
       maximumSizeInBytes: 200 * 1024 * 1024, // 200 MB
+      addRandomSuffix: true,
     }),
-    onUploadCompleted: async () => {
-      // No-op — processing is triggered separately by the client.
-    },
   });
 
   return Response.json(jsonResponse);

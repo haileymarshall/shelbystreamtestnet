@@ -1,23 +1,16 @@
-export const SHELBY_NETWORK = process.env.NEXT_PUBLIC_SHELBY_NETWORK ?? "shelbynet";
+export const SHELBY_NETWORK = process.env.NEXT_PUBLIC_SHELBY_NETWORK ?? "testnet";
 
 export const SHELBY_RPC_ENDPOINT =
   process.env.NEXT_PUBLIC_SHELBY_RPC_ENDPOINT ??
-  "https://api.shelbynet.shelby.xyz/shelby";
+  "https://api.testnet.shelby.xyz/shelby";
 
 export const APTOS_NODE_URL =
   process.env.NEXT_PUBLIC_APTOS_NODE_URL ??
-  "https://api.shelbynet.shelby.xyz/v1";
+  "https://api.testnet.aptoslabs.com/v1";
 
 export const SHELBY_INDEXER_URL =
   process.env.NEXT_PUBLIC_SHELBY_INDEXER_URL ??
-  "https://api.shelbynet.shelby.xyz/v1/graphql";
-
-export const SHELBY_BLOB_INDEXER_URL =
-  process.env.NEXT_PUBLIC_SHELBY_BLOB_INDEXER_URL ??
-  "https://api.shelbynet.aptoslabs.com/nocode/v1/public/alias/shelby/shelbynet/v1/graphql";
-
-export const SHELBY_API_KEY =
-  process.env.NEXT_PUBLIC_SHELBY_API_KEY ?? "";
+  "https://api.testnet.aptoslabs.com/v1/graphql";
 
 export const SHELBY_CONTRACT_ADDRESS =
   "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a";

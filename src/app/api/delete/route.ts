@@ -38,34 +38,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Collect all blob names for this video from the indexer
-    const { SHELBY_BLOB_INDEXER_URL, SHELBY_API_KEY } = await import("@/lib/constants");
-    const indexerRes = await fetch(SHELBY_BLOB_INDEXER_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${SHELBY_API_KEY}`,
+    // Ask the Shelby SDK for active blobs instead of hitting a network-specific indexer URL.
+    const existingBlobs = await client.coordination.getBlobs({
+      where: {
+        owner: { _eq: ownerAddress },
+        blob_name: { _like: `%/videos/${videoId}/%` },
       },
-      body: JSON.stringify({
-        query: `query GetVideoBlobs($prefix: String!) {
-          blobs(where: { blob_name: { _like: $prefix } }, limit: 500) {
-            blob_name
-          }
-        }`,
-        variables: { prefix: `%videos/${videoId}%` },
-      }),
+      pagination: { limit: 500 },
     });
 
-    const blobNames: string[] = [];
-    if (indexerRes.ok) {
-      const { data } = await indexerRes.json();
-      const blobs = data?.blobs ?? [];
-      for (const blob of blobs) {
-        // Strip the @address/ prefix to get the raw blob name
-        const name = blob.blob_name.replace(/^@[^/]+\//, "");
-        blobNames.push(name);
-      }
-    }
+    const blobNames = existingBlobs.map((blob) => blob.blobNameSuffix);
 
     // Fallback: if indexer returned nothing, delete known paths
     if (blobNames.length === 0) {

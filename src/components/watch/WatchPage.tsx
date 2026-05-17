@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Share2, ExternalLink, Clock, Shield } from "lucide-react";
 import type { VideoMetadata } from "@/types";
 import { formatDuration, formatTimeAgo, shortenAddress } from "@/lib/metadata";
-import { SHELBY_RPC_ENDPOINT } from "@/lib/constants";
+import { SHELBY_NETWORK, SHELBY_RPC_ENDPOINT } from "@/lib/constants";
 import Link from "next/link";
 import { toast } from "sonner";
 import ShelbyPlayer from "./ShelbyPlayer";
@@ -204,7 +204,13 @@ export default function WatchPage({ address, videoId }: WatchPageProps) {
               size="sm"
               variant="outline"
               nativeButton={false}
-              render={<a href={`https://explorer.aptoslabs.com/account/${address}?network=custom`} target="_blank" rel="noopener noreferrer" />}
+              render={
+                <a
+                  href={`https://explorer.aptoslabs.com/account/${address}?network=${SHELBY_NETWORK === "testnet" ? "testnet" : "custom"}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
               className="w-full h-8 text-xs border-border hover:border-primary/40 hover:bg-brand-muted hover:text-primary"
             >
               <ExternalLink className="w-3.5 h-3.5 mr-1.5" />

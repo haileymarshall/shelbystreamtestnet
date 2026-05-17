@@ -24,7 +24,10 @@ import {
 import type { UploadProgress } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { SHELBYUSD_FA_METADATA_ADDRESS } from "@/lib/constants";
+import {
+  SHELBY_INDEXER_URL,
+  SHELBYUSD_FA_METADATA_ADDRESS,
+} from "@/lib/constants";
 
 const STAGE_LABELS: Record<UploadProgress["stage"], string> = {
   idle: "Ready",
@@ -48,6 +51,43 @@ const STAGE_PROGRESS: Record<UploadProgress["stage"], number> = {
   error: 0,
 };
 
+const APTOS_COIN_TYPE = "0x1::aptos_coin::AptosCoin";
+
+async function fetchFungibleAssetBalances(address: string) {
+  const res = await fetch(SHELBY_INDEXER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: `query GetBalances($address: String!, $apt: String!, $susd: String!) {
+        current_fungible_asset_balances(
+          where: {
+            owner_address: { _eq: $address }
+            _or: [
+              { asset_type: { _eq: $apt } }
+              { asset_type: { _eq: $susd } }
+            ]
+          }
+        ) {
+          amount
+          asset_type
+          asset_type_v1
+        }
+      }`,
+      variables: {
+        address,
+        apt: APTOS_COIN_TYPE,
+        susd: SHELBYUSD_FA_METADATA_ADDRESS,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Indexer balance query failed: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json?.data?.current_fungible_asset_balances ?? [];
+}
 
 export default function UploadPage() {
   const { connected, account, signMessage } = useWallet();
@@ -75,63 +115,42 @@ export default function UploadPage() {
 
     const addr = account.address.toString();
 
-    // Fetch APT balance via Aptos node
-    fetch(`${process.env.NEXT_PUBLIC_APTOS_NODE_URL}/v1/accounts/${addr}/resources`)
-      .then((res) => (res.ok ? res.json() : []))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then((resources: Array<{ type: string; data: any }>) => {
-        const aptRes = resources.find(
-          (r: { type: string }) =>
-            r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
-        );
-        if (aptRes?.data?.coin?.value) {
-          const raw = BigInt(aptRes.data.coin.value);
-          setAptBalance((Number(raw) / 1e8).toFixed(4));
-        }
-      })
-      .catch(() => {});
+    fetchFungibleAssetBalances(addr)
+      .then(
+        (
+          balances: Array<{
+            amount: string | number;
+            asset_type?: string | null;
+            asset_type_v1?: string | null;
+          }>
+        ) => {
+          const apt = balances.find(
+            (balance) =>
+              balance.asset_type === APTOS_COIN_TYPE ||
+              balance.asset_type_v1 === APTOS_COIN_TYPE
+          );
+          const susd = balances.find(
+            (balance) =>
+              balance.asset_type === SHELBYUSD_FA_METADATA_ADDRESS ||
+              balance.asset_type_v1 === SHELBYUSD_FA_METADATA_ADDRESS
+          );
 
-    // Fetch ShelbyUSD balance via fungible asset store
-    fetch(
-      `${process.env.NEXT_PUBLIC_APTOS_NODE_URL}/v1/accounts/${addr}/resource/0x1::fungible_asset::FungibleStore`,
-    )
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.data?.balance) {
-          const raw = BigInt(data.data.balance);
-          setSusdBalance((Number(raw) / 1e6).toFixed(2));
+          if (apt?.amount !== undefined) {
+            setAptBalance((Number(apt.amount) / 1e8).toFixed(4));
+          } else {
+            setAptBalance("0.0000");
+          }
+
+          if (susd?.amount !== undefined) {
+            setSusdBalance((Number(susd.amount) / 1e6).toFixed(2));
+          } else {
+            setSusdBalance("0.00");
+          }
         }
-      })
+      )
       .catch(() => {
-        // Try the indexer approach as fallback
-        fetch(`${process.env.NEXT_PUBLIC_SHELBY_INDEXER_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: `query GetBalance($address: String!, $asset: String!) {
-              current_fungible_asset_balances(
-                where: {
-                  owner_address: { _eq: $address }
-                  asset_type: { _eq: $asset }
-                }
-              ) { amount }
-            }`,
-            variables: {
-              address: addr,
-              asset: SHELBYUSD_FA_METADATA_ADDRESS,
-            },
-          }),
-        })
-          .then((res) => (res.ok ? res.json() : null))
-          .then((json) => {
-            const bal = json?.data?.current_fungible_asset_balances?.[0]?.amount;
-            if (bal !== undefined) {
-              setSusdBalance((Number(bal) / 1e6).toFixed(2));
-            } else {
-              setSusdBalance("0.00");
-            }
-          })
-          .catch(() => setSusdBalance("0.00"));
+        setAptBalance(null);
+        setSusdBalance(null);
       });
   }, [connected, account?.address]);
 
@@ -188,7 +207,9 @@ export default function UploadPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          blobPath: blob.pathname,
           blobUrl: blob.url,
+          blobDownloadUrl: blob.downloadUrl,
           filename: file.name,
           title: title.trim(),
           description: description.trim(),

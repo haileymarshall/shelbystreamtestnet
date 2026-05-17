@@ -1,7 +1,7 @@
 import { Network } from "@aptos-labs/ts-sdk";
 
 function getShelbyNetwork(): Network.SHELBYNET | Network.TESTNET {
-  const net = process.env.NEXT_PUBLIC_SHELBY_NETWORK ?? "shelbynet";
+  const net = process.env.NEXT_PUBLIC_SHELBY_NETWORK ?? "testnet";
   if (net === "testnet") return Network.TESTNET;
   return Network.SHELBYNET;
 }

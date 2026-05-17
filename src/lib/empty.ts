@@ -1,2 +1,4 @@
 // Empty module polyfill for browser environments
-export default {};
+const empty = {};
+
+export default empty;
